@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>SVG Bar Chart</title>
+        <style media="screen">
+            svg {
+                border: 1px solid teal;
+            }
+        </style>
+    </head>
+    <body>
+
+        <script type="text/javascript" src="d3/d3.js"></script>
+        <script type="text/javascript">
+            var svgWidth = 800;
+            var svgHeight = 300;
+            var dataset = randomArray();
+            var barInterval = 2;
+            var maxInArray = Math.max.apply(Math, dataset);
+
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width", svgWidth)
+                        .attr("height", svgHeight);
+
+            svg.selectAll("rect")
+                .data(dataset)
+                .enter()
+                .append("rect")
+                .attr({
+                    x: function(d, i) { return i * (svgWidth / dataset.length); },
+                    y: function(d) { return svgHeight - d * 5; },
+                    height: function(d) { return d * 5; },
+                    width: svgWidth / dataset.length - barInterval,
+                    fill: function(d) { return "rgb(0, 0, " + (d * 10) + ")"; }
+                });
+
+            // 添加 Label
+            svg.selectAll("rect")
+                .data(dataset)
+                .enter()
+                .text(function(d) {
+                    return d;
+                });
+
+
+
+            function randomArray() {
+                var arr = [];
+                var len = Math.floor(Math.random() * 40);
+                for (var i = 0; i < len; i++) {
+                    arr.push(Math.ceil(Math.random() * 20));
+                }
+                return arr;
+            }
+        </script>
+    </body>
+</html>
