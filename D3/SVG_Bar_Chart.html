@@ -30,26 +30,24 @@
     <script type="text/javascript" src="d3/d3.js"></script>
     <script type="text/javascript">
 
-        var dataset = [5, 10, 13, 19, 21, 25, 22, 18, 15, 13,
-            11, 12, 15, 20, 18, 17, 16, 18, 23, 25
-        ];
         var maxValuePossible = 80;
+        var dataset = new Array(20);
+        dataset = randomArray();
+
         var svgWidth = 600;
         var svgHeight = 250;
 
         var svg = d3.select("body")
-            .append("svg")
-            .attr("width", svgWidth)
-            .attr("height", svgHeight);
+                    .append("svg")
+                    .attr("width", svgWidth)
+                    .attr("height", svgHeight);
 
         var xScale = d3.scale.ordinal()
-            .domain(d3.range(dataset.length))
-            .rangeRoundBands([0, svgWidth], 0.1);
+                        .domain(d3.range(dataset.length))
+                        .rangeRoundBands([0, svgWidth], 0.05);
         var yScale = d3.scale.linear()
-            .domain([0, d3.max(dataset, function(d) {
-                return d;
-            })])
-            .range([0, svgHeight]);
+                        .domain([0, d3.max(dataset)])
+                        .range([0, svgHeight]);
 
         svg.selectAll("rect")
             .data(dataset)
@@ -110,8 +108,8 @@
                 .delay(function(d, i) {
                     return i / dataset.length * 1000;
                 }) // add delay respectively
-                .duration(500) // add during time
-                .ease("linear") // ease effect: elastic/linear/bounce/circle
+                .duration(1000) // add during time
+                .ease("elastic") // ease effect: elastic/linear/bounce/circle
                 .attr("y", function(d) {
                     return svgHeight - yScale(d);
                 })
@@ -127,8 +125,8 @@
                 .delay(function(d, i) {
                     return i / dataset.length * 1000;
                 }) // add delay respectively
-                .duration(500) // add during time
-                .ease("linear") // ease effect: elastic/linear/bounce/circle
+                .duration(1000) // add during time
+                .ease("elastic") // ease effect: elastic/linear/bounce/circle
                 .text(function(d) {
                     return d;
                 })
@@ -146,7 +144,7 @@
 
         function addData() {
             // add a new new number
-            var newNumber = Math.floor(Math.random() * maxValuePossible);
+            var newNumber = Math.floor(Math.random() * maxValuePossible + 10);
             dataset.push(newNumber);
 
             // update the scale
@@ -161,7 +159,6 @@
                 .append("rect")
                 .attr({
                     x: svgWidth,
-                    y: function(d) { return svgHeight - yScale(d); },
                     width: xScale.rangeBand(),
                     height: function(d) { return yScale(d); },
                     fill: "teal"
@@ -169,38 +166,41 @@
 
             // update the whole bars
             bars.transition()
-                .duration(1000)
+                .duration(500)
+                .ease("linear")
                 .attr({
                     x: function(d, i) { return xScale(i); },
-                    y: function(d) { return svgHeight - yScale(i); },
+                    y: function(d) { return svgHeight - yScale(d); },
                     width: xScale.rangeBand(),
                     height: function(d) { return yScale(d); }
                 });
 
             // add the labels
-            // svg.selectAll("text")
-            //     .data(dataset)
-            //     .enter()
-            //     .append("text")
-            //     .text(function(d) { return d; })
-            //     .attr({
-            //         x: svgWidth,
-            //         y: function(d) { return svgHeight - yScale(d) + 14; },
-            //         fill: "white",
-            //         "font-family": "sans-serif",
-            //         "font-size": "11px"
-            //     });
+            svg.selectAll("text")
+                .data(dataset)
+                .enter()
+                .append("text")
+                .text(function(d) { return d; })
+                .attr({
+                    x: svgWidth + xScale.rangeBand() / 2,
+                    y: function(d) { return svgHeight - yScale(d) + 14; },
+                    fill: "white",
+                    "font-family": "sans-serif",
+                    "font-size": "11px"
+                });
 
             // update all labels
             svg.selectAll("text")
                 .data(dataset)
                 .transition()
-                .duration(1000)
+                .duration(500)
+                .ease("linear")
                 .text(function(d) { return d; })
                 .attr({
                     x: function(d, i) { return xScale(i) + xScale.rangeBand() / 2; },
                     y: function(d) { return svgHeight - yScale(d) + 14; },
-                });
+                })
+                .attr("text-anchor", "middle");
 
 
         }
@@ -210,7 +210,7 @@
             var len = dataset.length; //Count original length of dataset
             dataset = []; //Initialize empty array
             for (var i = 0; i < len; i++) {
-                var newNumber = Math.floor(Math.random() * maxValuePossible);
+                var newNumber = Math.floor(Math.random() * maxValuePossible + 10); // 产生10~80的随机数
                 dataset.push(newNumber);
             }
             return dataset;
