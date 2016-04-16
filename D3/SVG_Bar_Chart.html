@@ -1,59 +1,158 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>SVG Bar Chart</title>
-        <style media="screen">
-            svg {
-                border: 1px solid teal;
+
+<head>
+    <meta charset="utf-8">
+    <title>SVG Bar Chart</title>
+    <style media="screen">
+        svg {
+            border: 1px solid teal;
+        }
+
+        .btn {
+            padding: 6px;
+            border-radius: 1px;
+            font-family: Comic Sans MS;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="btn-area">
+        <button type="button" name="button" class="btn">Click to refresh!</button>
+        <br />
+        <br />
+    </div>
+
+    <script type="text/javascript" src="d3/d3.js"></script>
+    <script type="text/javascript">
+        var svgWidth = 600;
+        var svgHeight = 250;
+        var dataset = [5, 10, 13, 19, 21, 25, 22, 18, 15, 13,
+            11, 12, 15, 20, 18, 17, 16, 18, 23, 25
+        ];
+        var xScale = d3.scale.ordinal()
+            .domain(d3.range(dataset.length))
+            .rangeRoundBands([0, svgWidth], 0.05);
+        var yScale = d3.scale.linear()
+            .domain([0, d3.max(dataset, function(d) {
+                return d;
+            })])
+            .range([0, svgHeight]);
+
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+
+        svg.selectAll("rect")
+            .data(dataset)
+            .enter()
+            .append("rect")
+            .attr({
+                x: function(d, i) {
+                    return xScale(i);
+                },
+                y: function(d) {
+                    return svgHeight - yScale(d);
+                },
+                height: function(d) {
+                    return yScale(d);
+                },
+                width: function(d, i) {
+                    return xScale.rangeBand();
+                },
+                fill: function(d) {
+                    return "rgb(0, 0, " + (d * 10) + ")";
+                }
+            });
+
+
+
+        // 添加 Label
+        svg.selectAll("text")
+            .data(dataset)
+            .enter()
+            .append("text")
+            .text(function(d) {
+                return d;
+            })
+            .attr({
+                x: function(d, i) {
+                    return xScale(i) + xScale.rangeBand() / 2;
+                },
+                y: function(d) {
+                    return svgHeight - yScale(d) + 14;
+                },
+                fill: "white",
+                "font-family": "sans-serif",
+                "font-size": "11px"
+            })
+            .attr("text-anchor", "middle"); // 居中
+
+
+        // onclick event:
+        d3.select("button").on("click", function() {
+            //New values for dataset
+            var numValues = dataset.length; //Count original length of dataset
+            dataset = []; //Initialize empty array
+            for (var i = 0; i < numValues; i++) { //Loop numValues times
+                var newNumber = Math.floor(Math.random() * 25); //New random integer (0-24)
+                dataset.push(newNumber); //Add new number to array
             }
-        </style>
-    </head>
-    <body>
 
-        <script type="text/javascript" src="d3/d3.js"></script>
-        <script type="text/javascript">
-            var svgWidth = 800;
-            var svgHeight = 300;
-            var dataset = randomArray();
-            var barInterval = 2;
-            var maxInArray = Math.max.apply(Math, dataset);
-
-            var svg = d3.select("body")
-                        .append("svg")
-                        .attr("width", svgWidth)
-                        .attr("height", svgHeight);
-
+            //Update all rects
             svg.selectAll("rect")
                 .data(dataset)
-                .enter()
-                .append("rect")
-                .attr({
-                    x: function(d, i) { return i * (svgWidth / dataset.length); },
-                    y: function(d) { return svgHeight - d * 5; },
-                    height: function(d) { return d * 5; },
-                    width: svgWidth / dataset.length - barInterval,
-                    fill: function(d) { return "rgb(0, 0, " + (d * 10) + ")"; }
+                .transition() // add transition effects
+                .delay(function(d, i) {
+                    return i / dataset.length * 1000;
+                }) // add delay respectively
+                .duration(500) // add during time
+                .ease("linear") // ease effect: elastic/linear/bounce/circle
+                .attr("y", function(d) {
+                    return svgHeight - yScale(d);
+                })
+                .attr("height", function(d) {
+                    return yScale(d);
+                })
+                .attr("fill", function(d) {
+                    return "rgb(0, 0, " + (d * 10) + ")";
                 });
 
-            // 添加 Label
-            svg.selectAll("rect")
+            //Update all labels
+            svg.selectAll("text")
                 .data(dataset)
-                .enter()
+                .transition() // add transition effects
+                .delay(function(d, i) {
+                    return i / dataset.length * 1000;
+                }) // add delay respectively
+                .duration(500) // add during time
+                .ease("linear") // ease effect: elastic/linear/bounce/circle
                 .text(function(d) {
                     return d;
+                })
+                .attr("x", function(d, i) {
+                    return xScale(i) + xScale.rangeBand() / 2;
+                })
+                .attr("y", function(d) {
+                    return svgHeight - yScale(d) + 14;
                 });
+        });
 
 
 
-            function randomArray() {
-                var arr = [];
-                var len = Math.floor(Math.random() * 40);
-                for (var i = 0; i < len; i++) {
-                    arr.push(Math.ceil(Math.random() * 20));
-                }
-                return arr;
+
+        function randomArray() {
+            var arr = [];
+            var len = Math.floor(Math.random() * 40);
+            for (var i = 0; i < len; i++) {
+                arr.push(Math.ceil(Math.random() * 20));
             }
-        </script>
-    </body>
+            return arr;
+        }
+    </script>
+</body>
+
 </html>

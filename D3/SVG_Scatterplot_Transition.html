@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>SVG Scatterplot</title>
+    <style media="screen">
+        svg {
+            border: 1px solid teal;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: red;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+
+        .btn {
+            padding: 6px;
+            border-radius: 1px;
+            font-family: Comic Sans MS;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="btn-area">
+        <button type="button" name="button" class="btn">Click to change!</button>
+        <br>
+        <br>
+    </div>
+
+
+
+    <script type="text/javascript" src="d3/d3.js"></script>
+    <script type="text/javascript">
+        var svgWidth = 800;
+        var svgHeight = 300;
+        var edgePadding = 50;
+
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", svgWidth)
+            .attr("height", svgHeight);
+
+        // first load page:
+
+        var dataset = randomArray();
+
+        var xScale = d3.scale.linear()
+            .domain([0, d3.max(dataset, function(d) { return d[0]; })])
+            .range([edgePadding, svgWidth - edgePadding]);
+
+        var yScale = d3.scale.linear()
+            .domain([0, d3.max(dataset, function(d) { return d[1]; })])
+            .range([svgHeight - edgePadding, edgePadding]);
+
+        var xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient("bottom")
+            .ticks(5);
+
+        var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+            .ticks(5);
+
+        svg.selectAll("circle")
+            .data(dataset)
+            .enter()
+            .append("circle")
+            .attr({
+                cx: function(d) {
+                    return xScale(d[0]);
+                },
+                cy: function(d) {
+                    return yScale(d[1]);
+                },
+                r: "2px"
+            });
+
+        // create X axis
+        svg.append("g")
+            .attr("class", "axis x") // 先赋class（.axis）
+            .attr("transform", "translate(0, " + (svgHeight - edgePadding) + ")")
+            .call(xAxis);
+
+        // create Y axis
+        svg.append("g")
+            .attr("class", "axis y")
+            .attr("transform", "translate(" + edgePadding + ", 0)")
+            .call(yAxis);
+
+
+        // onclick:
+        d3.select("button").on("click", update);
+
+        function update() {
+            dataset = randomArray();
+
+            // update the domain
+            xScale.domain([0, d3.max(dataset, function(d) { return d[0]; })]);
+            yScale.domain([0, d3.max(dataset, function(d) { return d[1]; })]);
+
+            // update dots
+            svg.selectAll("circle")
+                .data(dataset)
+                .transition()
+                .duration(1000)
+                .each("start", function() {
+                    d3.select(this)   // 不能在这里面再添加一个transition，会打断其他，D3的机制
+                        .attr({
+                            fill: "magenta",
+                            r: "6px"
+                        })
+                })
+                .attr({
+                    cx: function(d) {
+                        return xScale(d[0]);
+                    },
+                    cy: function(d) {
+                        return yScale(d[1]);
+                    }
+                })
+                .each("end", function() {
+                    d3.select(this)
+                        .transition()    // 只能在end里添加另一个transition，不会中断其他，不像start里
+                        .duration(1000)  // 同上
+                        .attr({
+                            fill: "black",
+                            r: "2px"
+                        })
+                })
+
+            // update axis
+            svg.select(".x.axis")
+                .transition()
+                .duration(1000)
+                .call(xAxis);
+
+            svg.select(".y.axis")
+                .transition()
+                .duration(1000)
+                .call(yAxis);
+        }
+
+        function randomArray() {
+            //New values for dataset
+            var numValues = 50; //Count original length of dataset
+            var maxRange = Math.random() * 1000; //Max range of new values
+            dataset = []; //Initialize empty array
+            for (var i = 0; i < numValues; i++) { //Loop numValues times
+                var newNumber1 = Math.floor(Math.random() * maxRange); //New random integer
+                var newNumber2 = Math.floor(Math.random() * maxRange); //New random integer
+                dataset.push([newNumber1, newNumber2]); //Add new number to array
+            }
+            return dataset;
+        }
+    </script>
+</body>
+
+</html>
