@@ -11,9 +11,10 @@
 
         .btn {
             padding: 6px;
-            border-radius: 1px;
+            border-radius: 3px;
             font-family: Comic Sans MS;
             font-size: 12px;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -22,6 +23,7 @@
 
     <div class="btn-area">
         <button type="button" name="button" class="btn" id="add">Add Data</button>
+        <button type="button" name="button" class="btn" id="deleteStart">Delete From Start</button>
         <button type="button" name="button" class="btn" id="random">Click to Randomize</button>
         <br />
         <br />
@@ -50,7 +52,7 @@
                         .range([0, svgHeight]);
 
         svg.selectAll("rect")
-            .data(dataset)
+            .data(dataset, d => d)
             .enter()
             .append("rect")
             .attr({
@@ -73,7 +75,7 @@
 
         // 添加 Label
         svg.selectAll("text")
-            .data(dataset)
+            .data(dataset, d => d)
             .enter()
             .append("text")
             .text(function(d) {
@@ -103,7 +105,7 @@
 
             //Update all rects
             svg.selectAll("rect")
-                .data(dataset)
+                .data(dataset, d => d)
                 .transition() // add transition effects
                 .delay(function(d, i) {
                     return i / dataset.length * 1000;
@@ -120,7 +122,7 @@
 
             //Update all labels
             svg.selectAll("text")
-                .data(dataset)
+                .data(dataset, d => d)
                 .transition() // add transition effects
                 .delay(function(d, i) {
                     return i / dataset.length * 1000;
@@ -152,7 +154,7 @@
             yScale.domain([0, d3.max(dataset)]);
 
             // select all bars
-            var bars = svg.selectAll("rect").data(dataset);
+            var bars = svg.selectAll("rect").data(dataset, d => d);
 
             // add the bar to the rightmost
             bars.enter()
@@ -177,7 +179,7 @@
 
             // add the labels
             svg.selectAll("text")
-                .data(dataset)
+                .data(dataset, d => d)
                 .enter()
                 .append("text")
                 .text(function(d) { return d; })
@@ -191,7 +193,7 @@
 
             // update all labels
             svg.selectAll("text")
-                .data(dataset)
+                .data(dataset, d => d)
                 .transition()
                 .duration(500)
                 .ease("linear")
@@ -204,6 +206,76 @@
 
 
         }
+
+        // onlick (delete) event:
+        d3.select("#deleteStart").on("click", deleteStart);
+
+        function deleteStart() {
+
+            dataset.shift();
+
+            // update the scale
+            xScale.domain(d3.range(dataset.length));
+            yScale.domain([0, d3.max(dataset)]);
+
+            // select all bars
+            var bars = svg.selectAll("rect").data(dataset, d => d);
+
+            // add the bar to the rightmost
+            bars.enter()
+                .append("rect")
+                .attr({
+                    x: svgWidth,
+                    width: xScale.rangeBand(),
+                    height: function(d) { return yScale(d); },
+                    fill: "teal"
+                })
+
+            // update the whole bars
+            bars.transition()
+                .duration(500)
+                .ease("linear")
+                .attr({
+                    x: function(d, i) { return xScale(i); },
+                    y: function(d) { return svgHeight - yScale(d); },
+                    width: xScale.rangeBand(),
+                    height: function(d) { return yScale(d); }
+                });
+
+            bars.exit()
+                .transition()
+                .duration(500)
+                .attr("x", svgWidth)
+                .remove();
+
+            var texts = svg.selectAll("text").data(dataset, d => d);
+
+            texts.enter()
+                    .append("text")
+                    .text(function(d) { return d; })
+                    .attr({
+                        x: svgWidth,
+                        fill: "white",
+                        "font-family": "sans-serif",
+                        "font-size": "11px"
+                    });
+
+            texts.transition()
+                 .duration(500)
+                 .ease("linear")
+                 .attr({
+                     x: function(d, i) { return xScale(i) + xScale.rangeBand() / 2; },
+                     y: function(d) { return svgHeight - yScale(d) + 14; },
+                 })
+
+            texts.exit()
+                 .transition()
+                 .duration(500)
+                 .attr("x", svgWidth)
+                 .remove();
+        }
+
+
 
         // random array
         function randomArray() {
