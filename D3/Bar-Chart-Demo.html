@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Bar Chart Demo</title>
+
+        <style media="screen">
+
+            svg {
+                border: 1px solid teal;
+                padding: 0;
+            }
+
+            .btn {
+                padding: 6px;
+                border-radius: 3px;
+                font-family: Comic Sans MS;
+                font-size: 12px;
+                margin-right: 5px;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <h1>Bar Chart Demo</h1>
+
+        <div class="btn-area">
+            <button type="button" name="button" class="btn" id="add">Add Data</button>
+            <button type="button" name="button" class="btn" id="random">Randomize</button>
+            <button type="button" name="button" class="btn" id="sort">Sort</button>
+            <br />
+            <br />
+        </div>
+
+        <svg id="svg"></svg>
+
+        <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script type="text/javascript">
+
+            // configs:
+            var SVG = {
+                width: 600,
+                height: 300,
+                paddingLeft: 30,
+                paddingRight: 15,
+                paddingBottom: 35
+            };
+
+            var Chart = {
+                width: SVG.width - SVG.paddingLeft - SVG.paddingRight,
+                height: SVG.height - SVG.paddingBottom,
+                barInterval: 0.05
+            };
+
+            var svg = d3.select("svg")
+                        .attr({
+                            width: SVG.width,
+                            height: SVG.height
+                        });
+
+            var dataset = [
+                ["James", 95],
+                ["Kobe", 99],
+                ["Rose", 82],
+                ["Curry", 97],
+                ["Wiggins", 90],
+                ["Tompson", 85],
+                ["Wade", 88],
+                ["Yue", 66],
+                ["Lin", 80]
+            ];
+
+            // Initialize
+            render();
+
+
+
+
+            // render function
+            function render() {
+
+                var xScale = d3.scale.ordinal()
+                                .domain(d3.range(dataset.length))
+                                .rangeRoundBands([0, Chart.width], Chart.barInterval);
+
+                var yScale = d3.scale.linear()
+                                .domain([0, d3.max(dataset, function(d) { return d[1]; })])
+                                .range([Chart.height, 0]);
+
+                var xAxis = d3.svg.axis()
+                                .scale(xScale)
+                                .orient("bottom")
+                                .ticks(5);
+
+                var yAxis = d3.svg.axis()
+                                .scale(yScale)
+                                .orient("left")
+                                .ticks(5);
+
+                var bars = svg.selectAll("rect").data(dataset, function(d) { return d[0]; });
+
+                // draw
+                bars.enter()
+                    .append("rect")
+                    .attr({
+                        x: function(d, i) { return xScale(i) + SVG.paddingLeft; },
+                        y: Chart.height,
+                        width: xScale.rangeBand(),
+                        height: 0,
+                        fill: "lightgrey"
+                    });
+
+                bars.transition()
+                    .delay(function(d, i) { return i / dataset.length * 1000; })
+                    .duration(1500)
+                    .ease("elastic")
+                    .attr({
+                        y: function(d) { return yScale(d[1]); },
+                        height: function(d) { return Chart.height - yScale(d[1]); },
+                        fill: "teal"
+                    });
+
+
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </script>
+    </body>
+</html>
