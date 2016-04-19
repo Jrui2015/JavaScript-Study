@@ -19,6 +19,34 @@
                 margin-right: 5px;
             }
 
+            .label {
+                fill: white;
+                font-family: Comic Sans MS;
+                text-anchor: middle;
+            }
+
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: #bbb;
+                shape-rendering: crispEdges;
+            }
+
+            .axis.x line {
+                stroke: none;
+            }
+
+            .axis text {
+                font-family: sans-serif;
+                font-size: 12px;
+            }
+
+            rect:hover {
+                fill: orange;
+                cursor: pointer;
+            }
+
+
         </style>
     </head>
 
@@ -27,8 +55,8 @@
 
         <div class="btn-area">
             <button type="button" name="button" class="btn" id="add">Add Data</button>
-            <button type="button" name="button" class="btn" id="random">Randomize</button>
             <button type="button" name="button" class="btn" id="sort">Sort</button>
+            <button type="button" name="button" class="btn" id="reset">Reset</button>
             <br />
             <br />
         </div>
@@ -42,14 +70,15 @@
             var SVG = {
                 width: 600,
                 height: 300,
-                paddingLeft: 30,
+                paddingLeft: 35,
                 paddingRight: 15,
-                paddingBottom: 35
+                paddingTop: 8,
+                paddingBottom: 40
             };
 
             var Chart = {
                 width: SVG.width - SVG.paddingLeft - SVG.paddingRight,
-                height: SVG.height - SVG.paddingBottom,
+                height: SVG.height - SVG.paddingTop - SVG.paddingBottom,
                 barInterval: 0.05
             };
 
@@ -71,21 +100,21 @@
                 ["Lin", 80]
             ];
 
+            var originalData = dataset.slice(); // for reset
+
             // Initialize
             render();
-
-
 
 
             // render function
             function render() {
 
                 var xScale = d3.scale.ordinal()
-                                .domain(d3.range(dataset.length))
+                                .domain(dataset.map(function(v, i) { return v[0]; }))
                                 .rangeRoundBands([0, Chart.width], Chart.barInterval);
 
                 var yScale = d3.scale.linear()
-                                .domain([0, d3.max(dataset, function(d) { return d[1]; })])
+                                .domain([50, 100])
                                 .range([Chart.height, 0]);
 
                 var xAxis = d3.svg.axis()
@@ -96,39 +125,157 @@
                 var yAxis = d3.svg.axis()
                                 .scale(yScale)
                                 .orient("left")
-                                .ticks(5);
+                                .ticks(8);
 
                 var bars = svg.selectAll("rect").data(dataset, function(d) { return d[0]; });
 
-                // draw
+                var totalDelay = 500;
+                var oneByOne = function(d, i) { return totalDelay * i / dataset.length; };
+
+                // draw bars
                 bars.enter()
                     .append("rect")
                     .attr({
-                        x: function(d, i) { return xScale(i) + SVG.paddingLeft; },
+                        x: function(d) { return xScale(d[0]) + SVG.paddingLeft; },
                         y: Chart.height,
                         width: xScale.rangeBand(),
                         height: 0,
                         fill: "lightgrey"
-                    });
+                    })
+                    .on("click", function(d) { deleteItem(d); });
 
                 bars.transition()
-                    .delay(function(d, i) { return i / dataset.length * 1000; })
+                    .delay(oneByOne)
                     .duration(1500)
                     .ease("elastic")
                     .attr({
-                        y: function(d) { return yScale(d[1]); },
+                        x: function(d) { return xScale(d[0]) + SVG.paddingLeft; },
+                        y: function(d) { return yScale(d[1]) + SVG.paddingTop; },
+                        width: xScale.rangeBand(),
                         height: function(d) { return Chart.height - yScale(d[1]); },
                         fill: "teal"
                     });
 
+                var labels = svg.selectAll("text").data(dataset, function(d) { return d[0]; });
+
+                bars.exit()
+                    .transition()
+                    .duration(500)
+                    .attr({
+                        y: Chart.height,
+                        height: 0,
+                        fill: "orange"
+                    })
+                    .remove();
 
 
+                // draw labels
+                labels.enter()
+                      .append("text")
+                      .classed("label", true)
 
+                labels.transition()
+                      .delay(oneByOne)
+                      .duration(1500)
+                      .ease("elastic")
+                      .attr({
+                          x: function(d, i) { return SVG.paddingLeft + xScale(d[0]) + xScale.rangeBand() / 2; },
+                          y: function(d) {
+                              if (dataset.length > 25) {
+                                  return yScale(d[1]) + SVG.paddingTop + 16;
+                              } else {
+                                  return yScale(d[1]) + SVG.paddingTop + 20;
+                              }
+                          }
+                      })
+                      .text(function(d) {
+                          if (dataset.length > 43) {
+                              return "";
+                          } else {
+                              return d[1];
+                          }
+                      })
+                      .attr("font-size", function(d) {
+                          if (dataset.length > 25) {
+                              return 10;
+                          } else {
+                              return 13;
+                          }
+                      });
 
+                // remove label
+                labels.exit().remove();
 
+                // render X axis
+                if (dataset.length <= 25) {
+                    svg.append("g")
+                       .attr("class", "axis x")
+                       .attr("transform", "translate(" + SVG.paddingLeft + ", " + (Chart.height + SVG.paddingTop) + ")")
+                       .transition()
+                       .duration(1500)
+                       .ease("elastic")
+                       .call(xAxis)
+                       .selectAll("text")
+                       .style("text-anchor", "end")
+                       .attr("transform", "rotate(-25)");
+                } else {
+                    d3.select(".x.axis").selectAll(".tick").remove();
+                }
 
+                // render Y axis
+                svg.append("g")
+                   .attr("class", "axis y")
+                   .attr("transform", "translate(" + SVG.paddingLeft + ", " + SVG.paddingTop + ")")
+                   .call(yAxis);
+            }
 
+            // add data
+            d3.select("#add").on("click", addData);
 
+            var newPlayerNum = 1;
+
+            function addData() {
+                for (var i = 0; i < 4; i++) {
+                    dataset.push(generatePlayer());
+                }
+
+                render();
+            }
+
+            function generatePlayer() {
+                var newPlayer = [];
+                newPlayer.push("Player" + (newPlayerNum++));
+
+                var min = 65, max = 95;
+                var ability = Math.ceil(Math.random() * (max - min) + min); // 取范围
+                newPlayer.push(ability);
+                return newPlayer;
+            }
+
+            // onclick delete
+            function deleteItem(d) {
+                var index = dataset.indexOf(d);
+                dataset.splice(index, 1);
+                render();
+            }
+
+            // reset
+            d3.select("#reset").on("click", resetData);
+
+            function resetData() {
+                dataset = originalData.slice();
+                render();
+            }
+
+            // sort
+            d3.select("#sort").on("click", sortData);
+
+            function sortData() {
+                dataset.sort(function(a, b) {
+                    return d3.ascending(a[1], b[1]);
+                });
+
+                render();
             }
 
 
