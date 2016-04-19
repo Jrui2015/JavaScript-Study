@@ -1,221 +1,288 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Bar Chart Demo</title>
 
-<head>
-    <meta charset="utf-8">
-    <title>SVG Bar Chart</title>
-    <style media="screen">
-        svg {
-            border: 1px solid teal;
-        }
+        <style media="screen">
 
-        .btn {
-            padding: 6px;
-            border-radius: 1px;
-            font-family: Comic Sans MS;
-            font-size: 12px;
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="btn-area">
-        <button type="button" name="button" class="btn" id="add">Add Data</button>
-        <button type="button" name="button" class="btn" id="random">Click to Randomize</button>
-        <br />
-        <br />
-    </div>
-
-    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script type="text/javascript">
-
-        var maxValuePossible = 80;
-        var dataset = new Array(20);
-        dataset = randomArray();
-
-        var svgWidth = 600;
-        var svgHeight = 250;
-
-        var svg = d3.select("body")
-                    .append("svg")
-                    .attr("width", svgWidth)
-                    .attr("height", svgHeight);
-
-        var xScale = d3.scale.ordinal()
-                        .domain(d3.range(dataset.length))
-                        .rangeRoundBands([0, svgWidth], 0.05);
-        var yScale = d3.scale.linear()
-                        .domain([0, d3.max(dataset)])
-                        .range([0, svgHeight]);
-
-        svg.selectAll("rect")
-            .data(dataset)
-            .enter()
-            .append("rect")
-            .attr({
-                x: function(d, i) {
-                    return xScale(i);
-                },
-                y: function(d) {
-                    return svgHeight - yScale(d);
-                },
-                height: function(d) {
-                    return yScale(d);
-                },
-                width: function(d, i) {
-                    return xScale.rangeBand();
-                },
-                fill: "teal"
-            });
-
-
-
-        // 添加 Label
-        svg.selectAll("text")
-            .data(dataset)
-            .enter()
-            .append("text")
-            .text(function(d) {
-                return d;
-            })
-            .attr({
-                x: function(d, i) {
-                    return xScale(i) + xScale.rangeBand() / 2;
-                },
-                y: function(d) {
-                    return svgHeight - yScale(d) + 14;
-                },
-                fill: "white",
-                "font-family": "sans-serif",
-                "font-size": "11px"
-            })
-            .attr("text-anchor", "middle"); // 居中
-
-
-        // onclick (Randomize) event:
-        d3.select("#random").on("click", function() {
-
-            dataset = randomArray();
-
-            // update yScale
-            yScale.domain([0, d3.max(dataset, function(d) { return d; })]);
-
-            //Update all rects
-            svg.selectAll("rect")
-                .data(dataset)
-                .transition() // add transition effects
-                .delay(function(d, i) {
-                    return i / dataset.length * 1000;
-                }) // add delay respectively
-                .duration(1000) // add during time
-                .ease("elastic") // ease effect: elastic/linear/bounce/circle
-                .attr("y", function(d) {
-                    return svgHeight - yScale(d);
-                })
-                .attr("height", function(d) {
-                    return yScale(d);
-                });
-
-
-            //Update all labels
-            svg.selectAll("text")
-                .data(dataset)
-                .transition() // add transition effects
-                .delay(function(d, i) {
-                    return i / dataset.length * 1000;
-                }) // add delay respectively
-                .duration(1000) // add during time
-                .ease("elastic") // ease effect: elastic/linear/bounce/circle
-                .text(function(d) {
-                    return d;
-                })
-                .attr("x", function(d, i) {
-                    return xScale(i) + xScale.rangeBand() / 2;
-                })
-                .attr("y", function(d) {
-                    return svgHeight - yScale(d) + 14;
-                });
-        });
-
-
-        // onclick (Add Data) event:
-        d3.select("#add").on("click", addData);
-
-        function addData() {
-            // add a new new number
-            var newNumber = Math.floor(Math.random() * maxValuePossible + 10);
-            dataset.push(newNumber);
-
-            // update the scale
-            xScale.domain(d3.range(dataset.length));
-            yScale.domain([0, d3.max(dataset)]);
-
-            // select all bars
-            var bars = svg.selectAll("rect").data(dataset);
-
-            // add the bar to the rightmost
-            bars.enter()
-                .append("rect")
-                .attr({
-                    x: svgWidth,
-                    width: xScale.rangeBand(),
-                    height: function(d) { return yScale(d); },
-                    fill: "teal"
-                })
-
-            // update the whole bars
-            bars.transition()
-                .duration(500)
-                .ease("linear")
-                .attr({
-                    x: function(d, i) { return xScale(i); },
-                    y: function(d) { return svgHeight - yScale(d); },
-                    width: xScale.rangeBand(),
-                    height: function(d) { return yScale(d); }
-                });
-
-            // add the labels
-            svg.selectAll("text")
-                .data(dataset)
-                .enter()
-                .append("text")
-                .text(function(d) { return d; })
-                .attr({
-                    x: svgWidth + xScale.rangeBand() / 2,
-                    y: function(d) { return svgHeight - yScale(d) + 14; },
-                    fill: "white",
-                    "font-family": "sans-serif",
-                    "font-size": "11px"
-                });
-
-            // update all labels
-            svg.selectAll("text")
-                .data(dataset)
-                .transition()
-                .duration(500)
-                .ease("linear")
-                .text(function(d) { return d; })
-                .attr({
-                    x: function(d, i) { return xScale(i) + xScale.rangeBand() / 2; },
-                    y: function(d) { return svgHeight - yScale(d) + 14; },
-                })
-                .attr("text-anchor", "middle");
-
-
-        }
-
-        // random array
-        function randomArray() {
-            var len = dataset.length; //Count original length of dataset
-            dataset = []; //Initialize empty array
-            for (var i = 0; i < len; i++) {
-                var newNumber = Math.floor(Math.random() * maxValuePossible + 10); // 产生10~80的随机数
-                dataset.push(newNumber);
+            svg {
+                border: 1px solid teal;
+                padding: 0;
             }
-            return dataset;
-        }
-    </script>
-</body>
 
+            .btn {
+                padding: 6px;
+                border-radius: 3px;
+                font-family: Comic Sans MS;
+                font-size: 12px;
+                margin-right: 5px;
+            }
+
+            .label {
+                fill: white;
+                font-family: Comic Sans MS;
+                text-anchor: middle;
+            }
+
+            .axis path,
+            .axis line {
+                fill: none;
+                stroke: #bbb;
+                shape-rendering: crispEdges;
+            }
+
+            .axis.x line {
+                stroke: none;
+            }
+
+            .axis text {
+                font-family: sans-serif;
+                font-size: 12px;
+            }
+
+            rect:hover {
+                fill: orange;
+                cursor: pointer;
+            }
+
+
+        </style>
+    </head>
+
+    <body>
+        <h1>Bar Chart Demo</h1>
+
+        <div class="btn-area">
+            <button type="button" name="button" class="btn" id="add">Add Data</button>
+            <button type="button" name="button" class="btn" id="sort">Sort</button>
+            <button type="button" name="button" class="btn" id="reset">Reset</button>
+            <br />
+            <br />
+        </div>
+
+        <svg id="svg"></svg>
+
+        <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script type="text/javascript">
+
+            // configs:
+            var SVG = {
+                width: 600,
+                height: 300,
+                paddingLeft: 35,
+                paddingRight: 15,
+                paddingTop: 8,
+                paddingBottom: 40
+            };
+
+            var Chart = {
+                width: SVG.width - SVG.paddingLeft - SVG.paddingRight,
+                height: SVG.height - SVG.paddingTop - SVG.paddingBottom,
+                barInterval: 0.05
+            };
+
+            var svg = d3.select("svg")
+                        .attr({
+                            width: SVG.width,
+                            height: SVG.height
+                        });
+
+            var dataset = [
+                ["James", 95],
+                ["Kobe", 99],
+                ["Rose", 82],
+                ["Curry", 97],
+                ["Wiggins", 90],
+                ["Tompson", 85],
+                ["Wade", 88],
+                ["Yue", 66],
+                ["Lin", 80]
+            ];
+
+            var originalData = dataset.slice(); // for reset
+
+            // Initialize
+            render();
+
+
+            // render function
+            function render() {
+
+                var xScale = d3.scale.ordinal()
+                                .domain(dataset.map(function(v, i) { return v[0]; }))
+                                .rangeRoundBands([0, Chart.width], Chart.barInterval);
+
+                var yScale = d3.scale.linear()
+                                .domain([50, 100])
+                                .range([Chart.height, 0]);
+
+                var xAxis = d3.svg.axis()
+                                .scale(xScale)
+                                .orient("bottom")
+                                .ticks(5);
+
+                var yAxis = d3.svg.axis()
+                                .scale(yScale)
+                                .orient("left")
+                                .ticks(8);
+
+                var bars = svg.selectAll("rect").data(dataset, function(d) { return d[0]; });
+
+                var totalDelay = 500;
+                var oneByOne = function(d, i) { return totalDelay * i / dataset.length; };
+
+                // draw bars
+                bars.enter()
+                    .append("rect")
+                    .attr({
+                        x: function(d) { return xScale(d[0]) + SVG.paddingLeft; },
+                        y: Chart.height,
+                        width: xScale.rangeBand(),
+                        height: 0,
+                        fill: "lightgrey"
+                    })
+                    .on("click", function(d) { deleteItem(d); });
+
+                bars.transition()
+                    .delay(oneByOne)
+                    .duration(1500)
+                    .ease("elastic")
+                    .attr({
+                        x: function(d) { return xScale(d[0]) + SVG.paddingLeft; },
+                        y: function(d) { return yScale(d[1]) + SVG.paddingTop; },
+                        width: xScale.rangeBand(),
+                        height: function(d) { return Chart.height - yScale(d[1]); },
+                        fill: "teal"
+                    });
+
+                var labels = svg.selectAll("text").data(dataset, function(d) { return d[0]; });
+
+                bars.exit()
+                    .transition()
+                    .duration(500)
+                    .attr({
+                        y: Chart.height,
+                        height: 0,
+                        fill: "orange"
+                    })
+                    .remove();
+
+
+                // draw labels
+                labels.enter()
+                      .append("text")
+                      .classed("label", true)
+
+                labels.transition()
+                      .delay(oneByOne)
+                      .duration(1500)
+                      .ease("elastic")
+                      .attr({
+                          x: function(d, i) { return SVG.paddingLeft + xScale(d[0]) + xScale.rangeBand() / 2; },
+                          y: function(d) {
+                              if (dataset.length > 25) {
+                                  return yScale(d[1]) + SVG.paddingTop + 16;
+                              } else {
+                                  return yScale(d[1]) + SVG.paddingTop + 20;
+                              }
+                          }
+                      })
+                      .text(function(d) {
+                          if (dataset.length > 43) {
+                              return "";
+                          } else {
+                              return d[1];
+                          }
+                      })
+                      .attr("font-size", function(d) {
+                          if (dataset.length > 25) {
+                              return 10;
+                          } else {
+                              return 13;
+                          }
+                      });
+
+                // remove label
+                labels.exit().remove();
+
+                // render X axis
+                if (dataset.length <= 25) {
+                    svg.append("g")
+                       .attr("class", "axis x")
+                       .attr("transform", "translate(" + SVG.paddingLeft + ", " + (Chart.height + SVG.paddingTop) + ")")
+                       .transition()
+                       .duration(1500)
+                       .ease("elastic")
+                       .call(xAxis)
+                       .selectAll("text")
+                       .style("text-anchor", "end")
+                       .attr("transform", "rotate(-25)");
+                } else {
+                    d3.select(".x.axis").selectAll(".tick").remove();
+                }
+
+                // render Y axis
+                svg.append("g")
+                   .attr("class", "axis y")
+                   .attr("transform", "translate(" + SVG.paddingLeft + ", " + SVG.paddingTop + ")")
+                   .call(yAxis);
+            }
+
+            // add data
+            d3.select("#add").on("click", addData);
+
+            var newPlayerNum = 1;
+
+            function addData() {
+                for (var i = 0; i < 4; i++) {
+                    dataset.push(generatePlayer());
+                }
+
+                render();
+            }
+
+            function generatePlayer() {
+                var newPlayer = [];
+                newPlayer.push("Player" + (newPlayerNum++));
+
+                var min = 65, max = 95;
+                var ability = Math.ceil(Math.random() * (max - min) + min); // 取范围
+                newPlayer.push(ability);
+                return newPlayer;
+            }
+
+            // onclick delete
+            function deleteItem(d) {
+                var index = dataset.indexOf(d);
+                dataset.splice(index, 1);
+                render();
+            }
+
+            // reset
+            d3.select("#reset").on("click", resetData);
+
+            function resetData() {
+                dataset = originalData.slice();
+                render();
+            }
+
+            // sort
+            d3.select("#sort").on("click", sortData);
+
+            function sortData() {
+                dataset.sort(function(a, b) {
+                    return d3.ascending(a[1], b[1]);
+                });
+
+                render();
+            }
+
+
+
+
+
+
+        </script>
+    </body>
 </html>
